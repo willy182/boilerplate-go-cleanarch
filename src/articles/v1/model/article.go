@@ -13,6 +13,14 @@ type GormArticle struct {
 	Modified    *time.Time `gorm:"type:timestamp(6) with time zone"`
 }
 
+// ArticleInput data of struct
+type ArticleInput struct {
+	Title       string `json:"title"`
+	Summary     string `json:"summary"`
+	Description string `json:"description,omitempty"`
+	Image       string `json:"image,omitempty"`
+}
+
 // Article data of struct
 type Article struct {
 	ID          int       `json:"id"`

@@ -10,8 +10,8 @@ import (
 
 // HTTPResponse abstract interface
 type HTTPResponse interface {
-	JSON(w http.ResponseWriter) error
-	XML(w http.ResponseWriter) error
+	JSON(w http.ResponseWriter)
+	XML(w http.ResponseWriter)
 }
 
 type (
@@ -67,23 +67,35 @@ func NewHTTPResponse(code int, message string, params ...interface{}) HTTPRespon
 }
 
 // JSON for set http JSON response (Content-Type: application/json) with parameter is http response writer
-func (resp *Response) JSON(w http.ResponseWriter) error {
+func (resp *Response) JSON(w http.ResponseWriter) {
 	if resp.Data == nil {
 		resp.Data = struct{}{}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(resp.Code)
-	return json.NewEncoder(w).Encode(resp)
+
+	result, err := json.Marshal(&resp)
+	if err != nil {
+		panic(err)
+	}
+
+	w.Write(result)
 }
 
 // XML for set http XML response (Content-Type: application/xml)
-func (resp *Response) XML(w http.ResponseWriter) error {
+func (resp *Response) XML(w http.ResponseWriter) {
 	if resp.Data == nil {
 		resp.Data = struct{}{}
 	}
 	w.Header().Set("Content-Type", "application/xml")
 	w.WriteHeader(resp.Code)
-	return xml.NewEncoder(w).Encode(resp)
+
+	result, err := xml.Marshal(&resp)
+	if err != nil {
+		panic(err)
+	}
+
+	w.Write(result)
 }
 
 // CreateMeta method to create meta response

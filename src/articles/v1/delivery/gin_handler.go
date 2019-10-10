@@ -27,12 +27,55 @@ func NewArticleHTTPHandler(usecase usecase.UseCase) *ArticleHandler {
 
 // Mount function
 func (h *ArticleHandler) Mount(group *gin.RouterGroup) {
-	// group.POST("/article", h.GetAll)
+	group.POST("/article", h.Create)
 	group.GET("/article/:id", h.GetByID)
 }
 
+// Create method for handling route save article
+func (h *ArticleHandler) Create(c *gin.Context) {
+	ctxHandler := "article_handler_create"
+	ctx := context.Context()
+	multiError := shared.NewMultiError()
+
+	params := &model.ArticleInput{}
+	if err := c.Bind(params); err != nil {
+		multiError.Append("bindParam", err)
+		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "bind_param")
+		response := shared.NewHTTPResponse(http.StatusBadRequest, "error bind param", multiError)
+		return response.JSON(c.Writer())
+	}
+
+	multiError.Clear()
+
+	multiError = shared.Validate("article_create_params", params)
+	multiError = shared.MultiErrorNotNill(multiError)
+	if multiError != nil && multiError.HasError() {
+		multiError.Append("validateParams", multiError.Error())
+		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "validate_params")
+		response := shared.NewHTTPResponseV2(http.StatusBadRequest, "validate params", multiError)
+		return response.JSON(c.Writer())
+	}
+
+	paramDB := &model.GormArticle{
+		Title:       params.Title,
+		Summary:     params.Summary,
+		Description: params.Description,
+		Image:       params.Image,
+	}
+
+	err := <-h.ArticleUseCase.Save(ctx, paramDB)
+	if err != nil {
+		utils.Log(log.ErrorLevel, err.Error(), ctxHandler, "err_res_save")
+		response := shared.NewHTTPResponse(http.StatusBadRequest, err.Error())
+		return response.JSON(c.Writer())
+	}
+
+	response := shared.NewHTTPResponse(http.StatusOK, "Data has been save")
+	return response.JSON(c.Writer())
+}
+
 // GetByID method for handling route article by ID
-func (h *ArticleHandler) GetByID(c gin.Context) error {
+func (h *ArticleHandler) GetByID(c *gin.Context) {
 	ctxHandler := "article_handler_get_by_id"
 	idParam := c.Param("id")
 	ctx := context.Context()
@@ -42,7 +85,7 @@ func (h *ArticleHandler) GetByID(c gin.Context) error {
 		multiError.Append("error", fmt.Errorf("id must be numeric"))
 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "validate_id")
 		response := shared.NewHTTPResponse(http.StatusBadRequest, "validate id", multiError)
-		return response.JSON(c.Response())
+		return response.JSON(c.Writer())
 	}
 
 	multiError.Clear()
@@ -52,13 +95,13 @@ func (h *ArticleHandler) GetByID(c gin.Context) error {
 	if res.Error != nil {
 		utils.Log(log.ErrorLevel, res.Error.Error(), ctxHandler, "err_res_get_by_id")
 		response := shared.NewHTTPResponse(http.StatusBadRequest, res.Error.Error(), multiError)
-		return response.JSON(c.Response())
+		return response.JSON(c.Writer())
 	}
 
 	result := res.Result.(model.Article)
 	meta := shared.CreateMeta(1, 1, 1)
 	response := shared.NewHTTPResponse(http.StatusOK, "Article Get By ID", result, meta)
-	return response.JSON(c.Response())
+	return response.JSON(c.Writer())
 }
 
 // GetAll method for handling route for get article list
