@@ -1,0 +1,18 @@
+package: github.com/willy182/boilerplate-go-cleanarch
+import:
+- package: github.com/sirupsen/logrus
+  version: master
+- package: github.com/Sirupsen/logrus
+  version: master
+  repo: git@github.com:/sirupsen/logrus
+  vcs: git
+  subpackages:
+  - hooks/syslog
+- package: github.com/gin-gonic/gin
+  version: v1.4.0
+- package: github.com/jinzhu/gorm
+  version: v1.9.11
+- package: github.com/lib/pq
+  version: v1.2.0
+- package: github.com/joho/godotenv
+  version: v1.3.0

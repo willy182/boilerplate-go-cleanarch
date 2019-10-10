@@ -1,0 +1,8 @@
+.DS_Store
+.idea/
+vendor/
+glide.lock
+boilerplate-go-cleanarch
+.vscode/
+coverage.txt
+.env
