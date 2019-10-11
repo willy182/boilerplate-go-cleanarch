@@ -5,9 +5,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
+	"github.com/willy182/boilerplate-go-cleanarch/config/postgres"
 	"github.com/willy182/boilerplate-go-cleanarch/utils"
-	// echoMid "github.com/labstack/echo/middleware"
+
+	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 )
 
 // HTTPDefaultPort , default port for HTTP Server
@@ -21,18 +23,16 @@ func (hsi *HSIService) Serve() {
 		}
 	}()
 
+	postgres.InitDB()
+
 	g := gin.New()
 
 	g.Use(gin.Recovery())
 
-	if os.Getenv("APP_DEBUG") == "1" {
-		g.Debug = true
-	}
-
-	member := g.Group("/v1")
+	article := g.Group("/v1")
 
 	// version 4
-	hsi.Article.Handler.V1.Mount(member)
+	hsi.Article.Handler.V1.Mount(article)
 
 	//start gin server
 	var port uint16
@@ -48,5 +48,5 @@ func (hsi *HSIService) Serve() {
 	}
 
 	listenerPort := fmt.Sprintf(":%d", port)
-	g.Logger.Fatal(g.Start(listenerPort))
+	g.Run(listenerPort)
 }

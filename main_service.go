@@ -27,8 +27,8 @@ func InitHSIService(conf *config.Config) *HSIService {
 
 	hsi := new(HSIService)
 	hsi.Config = conf
-	hsi.Brand.Usecase = articleUC
-	hsi.Brand.Handler.V3 = articleV1Handler
+	hsi.Article.Usecase = articleUC
+	hsi.Article.Handler.V1 = articleV1Handler
 
 	return hsi
 }

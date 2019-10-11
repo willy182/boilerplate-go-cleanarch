@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"context"
-
 	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/model"
 )
 
@@ -14,8 +12,8 @@ type ResultRepository struct {
 
 // Repository interface for article repository
 type Repository interface {
-	Save(ctx context.Context, param *model.GormArticle) <-chan error
-	GetByID(ctx context.Context, ID int) <-chan ResultRepository
-	// GetAll(ctx context.Context, param model.Article) <-chan ResultRepository
-	// GetTotal(ctx context.Context, param model.Article) <-chan ResultRepository
+	Save(param *model.GormArticle) <-chan error
+	GetByID(ID int) <-chan ResultRepository
+	GetTotal(param model.QueryParamArticle) <-chan ResultRepository
+	GetAll(param model.QueryParamArticle) <-chan ResultRepository
 }

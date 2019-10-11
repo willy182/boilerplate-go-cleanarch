@@ -11,6 +11,7 @@ import (
 	"github.com/willy182/boilerplate-go-cleanarch/utils"
 
 	"github.com/joho/godotenv"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {

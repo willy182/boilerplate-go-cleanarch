@@ -1,10 +1,11 @@
 package delivery
 
 import (
-	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/model"
 	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/usecase"
@@ -29,12 +30,12 @@ func NewArticleHTTPHandler(usecase usecase.UseCase) *ArticleHandler {
 func (h *ArticleHandler) Mount(group *gin.RouterGroup) {
 	group.POST("/article", h.Create)
 	group.GET("/article/:id", h.GetByID)
+	group.GET("/article", h.GetAll)
 }
 
 // Create method for handling route save article
 func (h *ArticleHandler) Create(c *gin.Context) {
 	ctxHandler := "article_handler_create"
-	ctx := context.Context()
 	multiError := shared.NewMultiError()
 
 	params := &model.ArticleInput{}
@@ -42,18 +43,19 @@ func (h *ArticleHandler) Create(c *gin.Context) {
 		multiError.Append("bindParam", err)
 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "bind_param")
 		response := shared.NewHTTPResponse(http.StatusBadRequest, "error bind param", multiError)
-		return response.JSON(c.Writer())
+		response.JSON(c.Writer)
+		return
 	}
 
 	multiError.Clear()
 
 	multiError = shared.Validate("article_create_params", params)
-	multiError = shared.MultiErrorNotNill(multiError)
 	if multiError != nil && multiError.HasError() {
-		multiError.Append("validateParams", multiError.Error())
+		multiError.Append("validateParams", multiError)
 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "validate_params")
-		response := shared.NewHTTPResponseV2(http.StatusBadRequest, "validate params", multiError)
-		return response.JSON(c.Writer())
+		response := shared.NewHTTPResponse(http.StatusBadRequest, "validate params", multiError)
+		response.JSON(c.Writer)
+		return
 	}
 
 	paramDB := &model.GormArticle{
@@ -61,120 +63,116 @@ func (h *ArticleHandler) Create(c *gin.Context) {
 		Summary:     params.Summary,
 		Description: params.Description,
 		Image:       params.Image,
+		Created:     time.Now(),
 	}
 
-	err := <-h.ArticleUseCase.Save(ctx, paramDB)
+	err := <-h.ArticleUseCase.Save(paramDB)
 	if err != nil {
 		utils.Log(log.ErrorLevel, err.Error(), ctxHandler, "err_res_save")
 		response := shared.NewHTTPResponse(http.StatusBadRequest, err.Error())
-		return response.JSON(c.Writer())
+		response.JSON(c.Writer)
+		return
 	}
 
 	response := shared.NewHTTPResponse(http.StatusOK, "Data has been save")
-	return response.JSON(c.Writer())
+	response.JSON(c.Writer)
+	return
 }
 
 // GetByID method for handling route article by ID
 func (h *ArticleHandler) GetByID(c *gin.Context) {
 	ctxHandler := "article_handler_get_by_id"
 	idParam := c.Param("id")
-	ctx := context.Context()
 	multiError := shared.NewMultiError()
 
 	if ok := shared.ValidateNumeric(idParam); !ok {
 		multiError.Append("error", fmt.Errorf("id must be numeric"))
 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "validate_id")
 		response := shared.NewHTTPResponse(http.StatusBadRequest, "validate id", multiError)
-		return response.JSON(c.Writer())
+		response.JSON(c.Writer)
+		return
 	}
 
 	multiError.Clear()
 
 	id, _ := strconv.Atoi(idParam)
-	res := <-h.ArticleUseCase.GetByID(ctx, id)
+	res := <-h.ArticleUseCase.GetByID(id)
 	if res.Error != nil {
 		utils.Log(log.ErrorLevel, res.Error.Error(), ctxHandler, "err_res_get_by_id")
 		response := shared.NewHTTPResponse(http.StatusBadRequest, res.Error.Error(), multiError)
-		return response.JSON(c.Writer())
+		response.JSON(c.Writer)
+		return
 	}
 
 	result := res.Result.(model.Article)
 	meta := shared.CreateMeta(1, 1, 1)
 	response := shared.NewHTTPResponse(http.StatusOK, "Article Get By ID", result, meta)
-	return response.JSON(c.Writer())
+	response.JSON(c.Writer)
+	return
 }
 
 // GetAll method for handling route for get article list
-// func (h *ArticleHandler) GetAll(c gin.Context) error {
-// 	ctxHandler := "article_handler_get_all"
-// 	ctx := context.Context()
-// 	multiError := shared.NewMultiError()
-// 	var params model.CategoryRequestParams
+func (h *ArticleHandler) GetAll(c *gin.Context) {
+	ctxHandler := "article_handler_get_all"
+	multiError := shared.NewMultiError()
+	req := c.Request
 
-// 	err := shared.BindQueryParam(req.URL, &params)
-// 	if err != nil {
-// 		multiError.Append("error", err)
-// 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "bind_params")
-// 		response := shared.NewHTTPResponse(http.StatusBadRequest, "bind params", multiError)
-// 		return response.JSON(c.Response())
-// 	}
+	var params model.QueryParamArticle
 
-// 	multiError.Clear()
+	err := shared.BindQueryParam(req.URL, &params)
+	if err != nil {
+		multiError.Append("bindError", err)
+		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "bind_params")
+		response := shared.NewHTTPResponse(http.StatusBadRequest, "bind params", multiError)
+		response.JSON(c.Writer)
+		return
+	}
 
-// 	params.FilterQuery, _ = url.PathUnescape(params.FilterQuery)
+	multiError.Clear()
 
-// 	multiError = jsonschema.Validate("article_get_params", params)
-// 	if multiError != nil && multiError.HasError() {
-// 		golib.Log(golib.ErrorLevel, multiError.Error(), ctxHandler, "validate_params")
-// 		tracer.Log(ctx, ctxHandler, "validate_params", params)
-// 		response := golib.NewHTTPResponse(http.StatusBadRequest, "validate params", multiError)
-// 		return response.JSON(c.Response())
-// 	}
+	params.Query, _ = url.PathUnescape(params.Query)
 
-// 	if params.PageSize == "0" {
-// 		params.PageSize = ""
-// 	}
+	multiError = shared.Validate("article_get_params", params)
+	if multiError != nil && multiError.HasError() {
+		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "validate_params")
+		response := shared.NewHTTPResponse(http.StatusBadRequest, "validate params", multiError)
+		response.JSON(c.Writer)
+		return
+	}
 
-// 	if params.PageNumber == "0" {
-// 		params.PageNumber = ""
-// 	}
+	if params.Limit == "0" {
+		params.Limit = ""
+	}
 
-// 	var categoryParams model.CategoryParams
-// 	categoryParams.FilterQuery = params.FilterQuery
-// 	categoryParams.FilterOldID = params.FilterOldID
-// 	categoryParams.FilterStatus = params.FilterStatus
-// 	categoryParams.FilterCurrentLevel = params.FilterCurrentLevel
-// 	categoryParams.FieldsCategories = fieldsCategories
-// 	categoryParams.Sort = params.Sort
-// 	categoryParams.PageSize = params.PageSize
-// 	categoryParams.PageNumber = params.PageNumber
-// 	categoryParams.Include = params.Include
-// 	categoryParams.NoCache = params.NoCache
+	if params.Page == "0" {
+		params.Page = ""
+	}
 
-// 	res := <-h.ArticleUseCase.GetAll(ctx, categoryParams, req)
-// 	if res.Error != nil {
-// 		golib.Log(golib.ErrorLevel, res.Error.Error(), ctxHandler, "err_res_get_all")
-// 		tracer.Log(ctx, ctxHandler, "err_res_get_all", res.Error.Error(), categoryParams)
-// 		response := golib.NewHTTPResponse(http.StatusBadRequest, res.Error.Error(), multiError)
-// 		return response.JSON(c.Response())
-// 	}
+	res := <-h.ArticleUseCase.GetAll(params)
+	if res.Error != nil {
+		utils.Log(log.ErrorLevel, res.Error.Error(), ctxHandler, "validate_params")
+		response := shared.NewHTTPResponse(http.StatusBadRequest, res.Error.Error())
+		response.JSON(c.Writer)
+		return
+	}
 
-// 	result := res.Result.([]model.Article)
+	result := res.Result.(usecase.ResponseUseCase)
 
-// 	var (
-// 		page  = 1
-// 		limit = helpers.LimitDefault
-// 	)
+	var (
+		page  = 1
+		limit = shared.LimitDefault
+	)
 
-// 	if params.PageNumber != "" {
-// 		page, _ = strconv.Atoi(params.PageNumber)
-// 	}
+	if params.Page != "" {
+		page, _ = strconv.Atoi(params.Page)
+	}
 
-// 	if params.PageSize != "" {
-// 		limit, _ = strconv.Atoi(params.PageSize)
-// 	}
+	if params.Limit != "" {
+		limit, _ = strconv.Atoi(params.Limit)
+	}
 
-// 	meta := shared.CreateMeta(result.Total, page, limit)
-// 	response := golib.NewHTTPResponse(http.StatusOK, "Article List", result.Data, meta)
-// 	return response.JSON(c.Response())
-// }
+	meta := shared.CreateMeta(result.Total, page, limit)
+	response := shared.NewHTTPResponse(http.StatusOK, "Article List", result.Data, meta)
+	response.JSON(c.Writer)
+	return
+}

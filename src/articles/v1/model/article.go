@@ -9,7 +9,7 @@ type GormArticle struct {
 	Summary     string     `gorm:"type:varchar(250);NOT NULL"`
 	Description string     `gorm:"type:text"`
 	Image       string     `gorm:"type:varchar(150)"`
-	Created     *time.Time `gorm:"type:timestamp(6) with time zone;NOT NULL"`
+	Created     time.Time  `gorm:"type:timestamp(6) with time zone;NOT NULL"`
 	Modified    *time.Time `gorm:"type:timestamp(6) with time zone"`
 }
 
@@ -30,4 +30,13 @@ type Article struct {
 	Image       string    `json:"image,omitempty"`
 	Created     time.Time `json:"created"`
 	Modified    string    `json:"modified,omitempty"`
+}
+
+// QueryParamArticle data of struct
+type QueryParamArticle struct {
+	Query   string `json:"q,omitempty"`
+	OrderBy string `json:"orderBy,omitempty"`
+	SortBy  string `json:"sortBy,omitempty"`
+	Limit   string `json:"limit,omitempty"`
+	Page    string `json:"page,omitempty"`
 }

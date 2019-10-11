@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"context"
-
 	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/model"
 )
 
@@ -12,9 +10,15 @@ type ResultUseCase struct {
 	Error  error
 }
 
+// ResponseUseCase data structure
+type ResponseUseCase struct {
+	Data  interface{}
+	Total int
+}
+
 // UseCase use case for category
 type UseCase interface {
-	Save(ctx context.Context, param *model.GormArticle) <-chan error
-	GetByID(ctx context.Context, ID int) <-chan ResultUseCase
-	// GetAll(ctx context.Context, params model.CategoryParams, req *http.Request) <-chan ResultUseCase
+	Save(param *model.GormArticle) <-chan error
+	GetByID(ID int) <-chan ResultUseCase
+	GetAll(params model.QueryParamArticle) <-chan ResultUseCase
 }

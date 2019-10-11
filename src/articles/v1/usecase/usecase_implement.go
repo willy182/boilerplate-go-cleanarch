@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/model"
@@ -15,15 +14,15 @@ type articleUseCase struct {
 	articleRepo repository.Repository
 }
 
-// NewArticleUseCase use case handler for category
+// NewArticleUseCase use case handler for article
 func NewArticleUseCase(repo repository.Repository) UseCase {
 	return &articleUseCase{
 		articleRepo: repo,
 	}
 }
 
-// Save use case handler for get category by ID
-func (u *articleUseCase) Save(ctx context.Context, param *model.GormArticle) <-chan error {
+// Save use case handler for get article
+func (u *articleUseCase) Save(param *model.GormArticle) <-chan error {
 	ctxUsecase := "category_usecase_get_by_id"
 	output := make(chan error)
 
@@ -37,7 +36,7 @@ func (u *articleUseCase) Save(ctx context.Context, param *model.GormArticle) <-c
 			close(output)
 		}()
 
-		err := <-u.articleRepo.Save(ctx, param)
+		err := <-u.articleRepo.Save(param)
 		if err != nil {
 			utils.Log(log.ErrorLevel, err.Error(), ctxUsecase, "res_repo_save")
 			output <- err
@@ -50,8 +49,8 @@ func (u *articleUseCase) Save(ctx context.Context, param *model.GormArticle) <-c
 	return output
 }
 
-// GetByID use case handler for get category by ID
-func (u *articleUseCase) GetByID(ctx context.Context, ID int) <-chan ResultUseCase {
+// GetByID use case handler for get article by ID
+func (u *articleUseCase) GetByID(ID int) <-chan ResultUseCase {
 	ctxUsecase := "category_usecase_get_by_id"
 	output := make(chan ResultUseCase)
 
@@ -65,7 +64,7 @@ func (u *articleUseCase) GetByID(ctx context.Context, ID int) <-chan ResultUseCa
 			close(output)
 		}()
 
-		res := <-u.articleRepo.GetByID(ctx, ID)
+		res := <-u.articleRepo.GetByID(ID)
 		if res.Error != nil {
 			utils.Log(log.ErrorLevel, res.Error.Error(), ctxUsecase, "res_repo_get_by_id")
 			output <- ResultUseCase{Error: res.Error}
@@ -74,6 +73,49 @@ func (u *articleUseCase) GetByID(ctx context.Context, ID int) <-chan ResultUseCa
 
 		response := res.Result.(model.Article)
 
+		output <- ResultUseCase{Result: response}
+	}()
+
+	return output
+}
+
+// GetAll use case handler for find all get article
+func (u *articleUseCase) GetAll(params model.QueryParamArticle) <-chan ResultUseCase {
+	ctxUsecase := "category_usecase_get_all"
+	output := make(chan ResultUseCase)
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				message := fmt.Sprintf("panic: %v", r)
+				utils.Log(log.ErrorLevel, message, ctxUsecase, "recover_usecase_get_all")
+				output <- ResultUseCase{Error: fmt.Errorf(message)}
+			}
+			close(output)
+		}()
+
+		var response ResponseUseCase
+
+		res := <-u.articleRepo.GetAll(params)
+		if res.Error != nil {
+			utils.Log(log.ErrorLevel, res.Error.Error(), ctxUsecase, "res_repo_get_all")
+			output <- ResultUseCase{Error: res.Error}
+			return
+		}
+
+		data := res.Result.([]model.Article)
+
+		resTotal := <-u.articleRepo.GetTotal(params)
+		if resTotal.Error != nil {
+			utils.Log(log.ErrorLevel, resTotal.Error.Error(), ctxUsecase, "res_repo_get_total")
+			output <- ResultUseCase{Error: resTotal.Error}
+			return
+		}
+
+		total := resTotal.Result.(int)
+
+		response.Data = data
+		response.Total = total
 		output <- ResultUseCase{Result: response}
 	}()
 

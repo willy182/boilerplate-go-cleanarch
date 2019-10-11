@@ -1,6 +1,7 @@
 .DS_Store
 .idea/
 vendor/
+storage/
 glide.lock
 boilerplate-go-cleanarch
 .vscode/

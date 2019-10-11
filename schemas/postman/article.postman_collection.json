@@ -1,0 +1,114 @@
+{
+	"info": {
+		"_postman_id": "1c02f0cd-e33e-489e-b3fd-fc9c20004fe9",
+		"name": "article",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "localhost:3333/v1/article",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"title\": \"Lionel Messi: Gol Terbaikku? Sundulan ke Gawang Man United\",\n\t\"summary\": \"Sudah ratusan gol dibuat Lionel Messi sepanjang kariernya bersama Barcelona dan Timnas Argentina. Yang terbaik yang dia buat adalah ke gawang Manchester United.\",\n\t\"description\": \"Sudah ratusan gol dibuat Lionel Messi sepanjang kariernya bersama Barcelona dan Timnas Argentina. Yang terbaik yang dia buat adalah ke gawang Manchester United. Menurut catatan Transfremarkt, Messi sudah mengoleksi 692 gol sepanjang kariernya bersama Barcelona. Sementara di Timnas Argentina dia sudah menyumbang 36 gol di level senior. Dari ratusan gol tersebut, yang dianggap Messi terbaik adalah yang dia lesakkan dalam laga final Liga Champions 2009. Barcelona menang 2-0 atas Manchester United ketika itu, lewat gol yang dilesakkan Samuel Eto'o dan Messi. Messi mencetak gol menggunakan kepalanya saat menyambar umpan lambung yang dilepaskan Xavi Hernandez. Messi lepas dari kawalan Rio Ferdinand dan John O'Shea saat dia dengan leluasa melompat tinggi dan mengarahkan bola ke sudut gawang Edwin Van der Sar. Mempertimbangkan postur Messi yang kecil, sementara dia dihimpit bek besar dan kiper jangkung, gol tersebut memang spesial. Apalagi itu memastikan Barcelona menang 2-0 dan jadi juara. 'Gol terbaik saya adalah di Roma, menggunakan kepala di final Liga Champions,' ucap Messi.\",\n\t\"image\": \"https://akcdn.detik.net.id/community/media/visual/2019/10/10/5bd86fad-0c14-4800-aa11-ff726501edb0_169.jpeg?w=700&q=80\"\n}"
+				},
+				"url": {
+					"raw": "localhost:3333/v1/article",
+					"host": [
+						"localhost"
+					],
+					"port": "3333",
+					"path": [
+						"v1",
+						"article"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "localhost:3333/v1/article/1",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "localhost:3333/v1/article/3",
+					"host": [
+						"localhost"
+					],
+					"port": "3333",
+					"path": [
+						"v1",
+						"article",
+						"3"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "localhost:3333/v1/article",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "localhost:3333/v1/article?q=&orderBy=&sortBy=&limit=&page=",
+					"host": [
+						"localhost"
+					],
+					"port": "3333",
+					"path": [
+						"v1",
+						"article"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": ""
+						},
+						{
+							"key": "orderBy",
+							"value": "",
+							"description": "id, title, created"
+						},
+						{
+							"key": "sortBy",
+							"value": "",
+							"description": "asc or desc"
+						},
+						{
+							"key": "limit",
+							"value": ""
+						},
+						{
+							"key": "page",
+							"value": ""
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

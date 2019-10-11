@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/model"
@@ -33,7 +33,7 @@ func NewPostgresArticleRepository(read, write *gorm.DB) Repository {
 }
 
 // Save function, for save article object into database
-func (r *postgresArticleRepo) Save(ctx context.Context, param *model.GormArticle) <-chan error {
+func (r *postgresArticleRepo) Save(param *model.GormArticle) <-chan error {
 	ctxRepo := "ArticleRepositorySave"
 
 	output := make(chan error)
@@ -86,8 +86,8 @@ func (r *postgresArticleRepo) Save(ctx context.Context, param *model.GormArticle
 	return output
 }
 
-// Load function, for find Master Status by its primary ID
-func (r *postgresArticleRepo) GetByID(ctx context.Context, id int) <-chan ResultRepository {
+// GetByID function, for find article by its primary ID
+func (r *postgresArticleRepo) GetByID(id int) <-chan ResultRepository {
 	ctxRepo := "ArticleRepositoryGetByID"
 
 	output := make(chan ResultRepository)
@@ -108,14 +108,14 @@ func (r *postgresArticleRepo) GetByID(ctx context.Context, id int) <-chan Result
 			modified  pq.NullTime
 		)
 
-		if e := r.read.Table(tableName).Where("id = ?", id).Select("id").Error; e != nil && e.Error() != shared.ErrorRecordNotFound {
-			utils.Log(log.ErrorLevel, e.Error(), ctxRepo, "recover_repository_get_by_id")
-			output <- ResultRepository{Error: e}
-			return
-		}
-
 		row := r.read.Table(tableName).Where("id = ?", id).Select("id, title, summary, description, image, created, modified").Row()
 		row.Scan(&article.ID, &article.Title, &article.Summary, &desc, &img, &article.Created, &modified)
+
+		if article.ID == 0 {
+			utils.Log(log.ErrorLevel, shared.ErrorRecordNotFound, ctxRepo, "recover_repository_get_by_id")
+			output <- ResultRepository{Error: fmt.Errorf(shared.ErrorRecordNotFound)}
+			return
+		}
 
 		if desc.Valid {
 			article.Description = desc.String
@@ -130,6 +130,132 @@ func (r *postgresArticleRepo) GetByID(ctx context.Context, id int) <-chan Result
 		}
 
 		output <- ResultRepository{Result: article}
+	}()
+
+	return output
+}
+
+// GetTotal function, for find all article
+func (r *postgresArticleRepo) GetTotal(param model.QueryParamArticle) <-chan ResultRepository {
+	ctxRepo := "ArticleRepositoryGetTotal"
+
+	output := make(chan ResultRepository)
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				message := fmt.Sprintf("panic: %v", r)
+				utils.Log(log.ErrorLevel, message, ctxRepo, "recover_repository_get_total")
+				output <- ResultRepository{Error: fmt.Errorf(message)}
+			}
+			close(output)
+		}()
+
+		var total int
+
+		q := r.read.Table(tableName)
+		if param.Query != "" {
+			q = q.Where("title LIKE ?", fmt.Sprintf("%%%s%%", param.Query))
+		}
+
+		err := q.Count(&total).Error
+		if err != nil {
+			utils.Log(log.ErrorLevel, err.Error(), ctxRepo, "query_err_rows")
+			output <- ResultRepository{Error: err}
+			return
+		}
+
+		output <- ResultRepository{Result: total}
+	}()
+
+	return output
+}
+
+// GetAll function, for find all article
+func (r *postgresArticleRepo) GetAll(param model.QueryParamArticle) <-chan ResultRepository {
+	ctxRepo := "ArticleRepositoryGetAll"
+
+	output := make(chan ResultRepository)
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				message := fmt.Sprintf("panic: %v", r)
+				utils.Log(log.ErrorLevel, message, ctxRepo, "recover_repository_get_total")
+				output <- ResultRepository{Error: fmt.Errorf(message)}
+			}
+			close(output)
+		}()
+
+		var (
+			articles []model.Article
+			page     int
+		)
+
+		limit := shared.LimitDefault
+		orderBy := "id"
+		sortBy := "desc"
+
+		if param.Limit != "" {
+			limit, _ = strconv.Atoi(param.Limit)
+		}
+
+		if param.Page != "" {
+			page, _ = strconv.Atoi(param.Page)
+		}
+
+		if param.OrderBy != "" {
+			orderBy = param.OrderBy
+		}
+
+		if param.SortBy != "" {
+			sortBy = param.SortBy
+		}
+
+		q := r.read.Table(tableName)
+		if param.Query != "" {
+			q = q.Where("title LIKE ?", "%"+param.Query+"%")
+		}
+
+		rows, err := q.Order(fmt.Sprintf("%s %s", orderBy, sortBy)).Limit(limit).Offset(page).Rows()
+		if err != nil {
+			utils.Log(log.ErrorLevel, err.Error(), ctxRepo, "query_err_rows")
+			output <- ResultRepository{Error: err}
+			return
+		}
+
+		defer rows.Close()
+
+		for rows.Next() {
+			var (
+				article   model.Article
+				desc, img sql.NullString
+				modified  pq.NullTime
+			)
+
+			err = rows.Scan(&article.ID, &article.Title, &article.Summary, &desc, &img, &article.Created, &modified)
+			if err != nil {
+				utils.Log(log.ErrorLevel, err.Error(), ctxRepo, "err_rows")
+				output <- ResultRepository{Error: err}
+				return
+			}
+
+			if desc.Valid {
+				article.Description = desc.String
+			}
+
+			if img.Valid {
+				article.Image = img.String
+			}
+
+			if modified.Valid {
+				article.Modified = modified.Time.Format(time.RFC3339)
+			}
+
+			articles = append(articles, article)
+		}
+
+		output <- ResultRepository{Result: articles}
 	}()
 
 	return output

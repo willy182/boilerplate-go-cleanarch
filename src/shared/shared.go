@@ -12,6 +12,8 @@ import (
 )
 
 const (
+	// LimitDefault constanta limit default
+	LimitDefault = 10
 	// ErrorDataNotFound error message when data doesn't exist
 	ErrorDataNotFound = "data not found"
 	// ErrorRecordNotFound error message whene record doesn't exist

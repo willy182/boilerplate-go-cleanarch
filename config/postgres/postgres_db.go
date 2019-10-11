@@ -64,7 +64,14 @@ func InitDB() {
 
 	if isDebug {
 		dbLogger = log.New()
+		lf := fmt.Sprintf("%s/logs/database.log", os.Getenv("STORAGE_DIR"))
+
+		f, err := os.OpenFile(lf, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			panic(err)
+		}
 		dbLogger.Formatter = &DBLogFormatter{EnableColor: false}
+		dbLogger.Out = f
 	}
 }
 
