@@ -1,7 +1,7 @@
 [
     {
         "id": "article_create_params",
-        "$schema": "http://json-schema.org/draft-04/schema#",
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "description": "schema create article",
         "type": "object",
         "properties": {
