@@ -44,11 +44,11 @@
                 "enum": ["id", "title", "created"]
             },
             "limit": {
-                "type": "array",
+                "type": "string",
                 "pattern": "^[0-9]+$"
             },
             "page": {
-                "type": "array",
+                "type": "string",
                 "pattern": "^[0-9]+$"
             }
         }
