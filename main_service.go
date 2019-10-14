@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/willy182/boilerplate-go-cleanarch/config"
 
-	articleV1HTTP "github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/delivery"
-	articleRepo "github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/repository"
-	articleUseCase "github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/usecase"
+	articleV1HTTP "github.com/willy182/boilerplate-go-cleanarch/articles/v1/delivery"
+	articleRepo "github.com/willy182/boilerplate-go-cleanarch/articles/v1/repository"
+	articleUseCase "github.com/willy182/boilerplate-go-cleanarch/articles/v1/usecase"
 )
 
 // HSIService main service structure

@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/model"
-	"github.com/willy182/boilerplate-go-cleanarch/src/shared"
+	"github.com/willy182/boilerplate-go-cleanarch/articles/v1/model"
+	"github.com/willy182/boilerplate-go-cleanarch/lib"
 	"github.com/willy182/boilerplate-go-cleanarch/utils"
 
 	"github.com/jinzhu/gorm"
@@ -112,8 +112,8 @@ func (r *postgresArticleRepo) GetByID(id int) <-chan ResultRepository {
 		row.Scan(&article.ID, &article.Title, &article.Summary, &desc, &img, &article.Created, &modified)
 
 		if article.ID == 0 {
-			utils.Log(log.ErrorLevel, shared.ErrorRecordNotFound, ctxRepo, "record_not_found")
-			output <- ResultRepository{Error: fmt.Errorf(shared.ErrorRecordNotFound)}
+			utils.Log(log.ErrorLevel, lib.ErrorRecordNotFound, ctxRepo, "record_not_found")
+			output <- ResultRepository{Error: fmt.Errorf(lib.ErrorRecordNotFound)}
 			return
 		}
 
@@ -193,7 +193,7 @@ func (r *postgresArticleRepo) GetAll(param model.QueryParamArticle) <-chan Resul
 			page     int
 		)
 
-		limit := shared.LimitDefault
+		limit := lib.LimitDefault
 		orderBy := "id"
 		sortBy := "desc"
 
@@ -259,7 +259,7 @@ func (r *postgresArticleRepo) GetAll(param model.QueryParamArticle) <-chan Resul
 		}
 
 		if len(articles) <= 0 {
-			errMsg := fmt.Errorf(shared.ErrorDataNotFound)
+			errMsg := fmt.Errorf(lib.ErrorDataNotFound)
 			utils.Log(log.ErrorLevel, errMsg.Error(), ctxRepo, "rows_empty")
 			output <- ResultRepository{Error: errMsg}
 			return

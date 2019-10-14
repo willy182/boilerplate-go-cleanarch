@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/willy182/boilerplate-go-cleanarch/config"
-	"github.com/willy182/boilerplate-go-cleanarch/src/shared"
+	"github.com/willy182/boilerplate-go-cleanarch/lib"
 	"github.com/willy182/boilerplate-go-cleanarch/utils"
 
 	"github.com/joho/godotenv"
@@ -34,7 +34,7 @@ func main() {
 	signal.Notify(signals, os.Kill)
 
 	pathSchema := "schemas/json"
-	shared.Load(pathSchema)
+	lib.Load(pathSchema)
 
 	wg := &sync.WaitGroup{}
 

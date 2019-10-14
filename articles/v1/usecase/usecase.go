@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/model"
+	"github.com/willy182/boilerplate-go-cleanarch/articles/v1/model"
 )
 
 // ResultUseCase data structure

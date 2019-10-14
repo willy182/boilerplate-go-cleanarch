@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/model"
-	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/usecase"
-	"github.com/willy182/boilerplate-go-cleanarch/src/shared"
+	"github.com/willy182/boilerplate-go-cleanarch/articles/v1/model"
+	"github.com/willy182/boilerplate-go-cleanarch/articles/v1/usecase"
+	"github.com/willy182/boilerplate-go-cleanarch/lib"
 	"github.com/willy182/boilerplate-go-cleanarch/utils"
 
 	"github.com/gin-gonic/gin"
@@ -36,23 +36,23 @@ func (h *ArticleHandler) Mount(group *gin.RouterGroup) {
 // Create method for handling route save article
 func (h *ArticleHandler) Create(c *gin.Context) {
 	ctxHandler := "article_handler_create"
-	multiError := shared.NewMultiError()
+	multiError := lib.NewMultiError()
 
 	params := &model.ArticleInput{}
 	if err := c.Bind(params); err != nil {
 		multiError.Append("bindParam", err)
 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "bind_param")
-		response := shared.NewHTTPResponse(http.StatusBadRequest, "error bind param", multiError)
+		response := lib.NewHTTPResponse(http.StatusBadRequest, "error bind param", multiError)
 		response.JSON(c.Writer)
 		return
 	}
 
 	multiError.Clear()
 
-	multiError = shared.Validate("article_create_params", params)
+	multiError = lib.Validate("article_create_params", params)
 	if multiError != nil && multiError.HasError() {
 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "validate_params")
-		response := shared.NewHTTPResponse(http.StatusBadRequest, "validate params", multiError)
+		response := lib.NewHTTPResponse(http.StatusBadRequest, "validate params", multiError)
 		response.JSON(c.Writer)
 		return
 	}
@@ -68,12 +68,12 @@ func (h *ArticleHandler) Create(c *gin.Context) {
 	err := <-h.ArticleUseCase.Save(paramDB)
 	if err != nil {
 		utils.Log(log.ErrorLevel, err.Error(), ctxHandler, "err_res_save")
-		response := shared.NewHTTPResponse(http.StatusBadRequest, err.Error())
+		response := lib.NewHTTPResponse(http.StatusBadRequest, err.Error())
 		response.JSON(c.Writer)
 		return
 	}
 
-	response := shared.NewHTTPResponse(http.StatusOK, "Data has been save")
+	response := lib.NewHTTPResponse(http.StatusOK, "Data has been save")
 	response.JSON(c.Writer)
 	return
 }
@@ -82,12 +82,12 @@ func (h *ArticleHandler) Create(c *gin.Context) {
 func (h *ArticleHandler) GetByID(c *gin.Context) {
 	ctxHandler := "article_handler_get_by_id"
 	idParam := c.Param("id")
-	multiError := shared.NewMultiError()
+	multiError := lib.NewMultiError()
 
-	if ok := shared.ValidateNumeric(idParam); !ok {
+	if ok := lib.ValidateNumeric(idParam); !ok {
 		multiError.Append("error", fmt.Errorf("id must be numeric"))
 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "validate_id")
-		response := shared.NewHTTPResponse(http.StatusBadRequest, "validate id", multiError)
+		response := lib.NewHTTPResponse(http.StatusBadRequest, "validate id", multiError)
 		response.JSON(c.Writer)
 		return
 	}
@@ -96,21 +96,21 @@ func (h *ArticleHandler) GetByID(c *gin.Context) {
 
 	id, _ := strconv.Atoi(idParam)
 	res := <-h.ArticleUseCase.GetByID(id)
-	if res.Error != nil && res.Error.Error() == shared.ErrorRecordNotFound {
+	if res.Error != nil && res.Error.Error() == lib.ErrorRecordNotFound {
 		utils.Log(log.ErrorLevel, res.Error.Error(), ctxHandler, "record_not_found")
-		response := shared.NewHTTPResponse(http.StatusOK, res.Error.Error())
+		response := lib.NewHTTPResponse(http.StatusOK, res.Error.Error())
 		response.JSON(c.Writer)
 		return
 	} else if res.Error != nil {
 		utils.Log(log.ErrorLevel, res.Error.Error(), ctxHandler, "err_res_get_by_id")
-		response := shared.NewHTTPResponse(http.StatusBadRequest, res.Error.Error(), multiError)
+		response := lib.NewHTTPResponse(http.StatusBadRequest, res.Error.Error(), multiError)
 		response.JSON(c.Writer)
 		return
 	}
 
 	result := res.Result.(model.Article)
-	meta := shared.CreateMeta(1, 1, 1)
-	response := shared.NewHTTPResponse(http.StatusOK, "Article Get By ID", result, meta)
+	meta := lib.CreateMeta(1, 1, 1)
+	response := lib.NewHTTPResponse(http.StatusOK, "Article Get By ID", result, meta)
 	response.JSON(c.Writer)
 	return
 }
@@ -118,16 +118,16 @@ func (h *ArticleHandler) GetByID(c *gin.Context) {
 // GetAll method for handling route for get article list
 func (h *ArticleHandler) GetAll(c *gin.Context) {
 	ctxHandler := "article_handler_get_all"
-	multiError := shared.NewMultiError()
+	multiError := lib.NewMultiError()
 	req := c.Request
 
 	var params model.QueryParamArticle
 
-	err := shared.BindQueryParam(req.URL, &params)
+	err := lib.BindQueryParam(req.URL, &params)
 	if err != nil {
 		multiError.Append("bindError", err)
 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "bind_params")
-		response := shared.NewHTTPResponse(http.StatusBadRequest, "bind params", multiError)
+		response := lib.NewHTTPResponse(http.StatusBadRequest, "bind params", multiError)
 		response.JSON(c.Writer)
 		return
 	}
@@ -136,10 +136,10 @@ func (h *ArticleHandler) GetAll(c *gin.Context) {
 
 	params.Query, _ = url.PathUnescape(params.Query)
 
-	multiError = shared.Validate("article_get_params", params)
+	multiError = lib.Validate("article_get_params", params)
 	if multiError != nil && multiError.HasError() {
 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "validate_params")
-		response := shared.NewHTTPResponse(http.StatusBadRequest, "validate params", multiError)
+		response := lib.NewHTTPResponse(http.StatusBadRequest, "validate params", multiError)
 		response.JSON(c.Writer)
 		return
 	}
@@ -155,7 +155,7 @@ func (h *ArticleHandler) GetAll(c *gin.Context) {
 	res := <-h.ArticleUseCase.GetAll(params)
 	if res.Error != nil {
 		utils.Log(log.ErrorLevel, res.Error.Error(), ctxHandler, "validate_params")
-		response := shared.NewHTTPResponse(http.StatusBadRequest, res.Error.Error())
+		response := lib.NewHTTPResponse(http.StatusBadRequest, res.Error.Error())
 		response.JSON(c.Writer)
 		return
 	}
@@ -165,14 +165,14 @@ func (h *ArticleHandler) GetAll(c *gin.Context) {
 	if result.Total == 0 {
 		msg := "Search results empty"
 		utils.Log(log.ErrorLevel, msg, ctxHandler, "list_empty")
-		response := shared.NewHTTPResponse(http.StatusOK, msg)
+		response := lib.NewHTTPResponse(http.StatusOK, msg)
 		response.JSON(c.Writer)
 		return
 	}
 
 	var (
 		page  = 1
-		limit = shared.LimitDefault
+		limit = lib.LimitDefault
 	)
 
 	if params.Page != "" {
@@ -183,8 +183,8 @@ func (h *ArticleHandler) GetAll(c *gin.Context) {
 		limit, _ = strconv.Atoi(params.Limit)
 	}
 
-	meta := shared.CreateMeta(result.Total, page, limit)
-	response := shared.NewHTTPResponse(http.StatusOK, "Article List", result.Data, meta)
+	meta := lib.CreateMeta(result.Total, page, limit)
+	response := lib.NewHTTPResponse(http.StatusOK, "Article List", result.Data, meta)
 	response.JSON(c.Writer)
 	return
 }

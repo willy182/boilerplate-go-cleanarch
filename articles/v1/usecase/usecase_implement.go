@@ -3,8 +3,8 @@ package usecase
 import (
 	"fmt"
 
-	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/model"
-	"github.com/willy182/boilerplate-go-cleanarch/src/articles/v1/repository"
+	"github.com/willy182/boilerplate-go-cleanarch/articles/v1/model"
+	"github.com/willy182/boilerplate-go-cleanarch/articles/v1/repository"
 	"github.com/willy182/boilerplate-go-cleanarch/utils"
 
 	log "github.com/sirupsen/logrus"
