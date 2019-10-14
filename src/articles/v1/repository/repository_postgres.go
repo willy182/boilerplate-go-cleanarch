@@ -112,7 +112,7 @@ func (r *postgresArticleRepo) GetByID(id int) <-chan ResultRepository {
 		row.Scan(&article.ID, &article.Title, &article.Summary, &desc, &img, &article.Created, &modified)
 
 		if article.ID == 0 {
-			utils.Log(log.ErrorLevel, shared.ErrorRecordNotFound, ctxRepo, "recover_repository_get_by_id")
+			utils.Log(log.ErrorLevel, shared.ErrorRecordNotFound, ctxRepo, "record_not_found")
 			output <- ResultRepository{Error: fmt.Errorf(shared.ErrorRecordNotFound)}
 			return
 		}
@@ -154,8 +154,9 @@ func (r *postgresArticleRepo) GetTotal(param model.QueryParamArticle) <-chan Res
 		var total int
 
 		q := r.read.Table(tableName)
+		queryLike := fmt.Sprintf("%%%s%%", param.Query)
 		if param.Query != "" {
-			q = q.Where("title LIKE ?", fmt.Sprintf("%%%s%%", param.Query))
+			q = q.Where("LOWER(title) LIKE LOWER(?)", queryLike)
 		}
 
 		err := q.Count(&total).Error
@@ -202,6 +203,7 @@ func (r *postgresArticleRepo) GetAll(param model.QueryParamArticle) <-chan Resul
 
 		if param.Page != "" {
 			page, _ = strconv.Atoi(param.Page)
+			page = page - 1
 		}
 
 		if param.OrderBy != "" {
@@ -213,8 +215,9 @@ func (r *postgresArticleRepo) GetAll(param model.QueryParamArticle) <-chan Resul
 		}
 
 		q := r.read.Table(tableName)
+		queryLike := fmt.Sprintf("%%%s%%", param.Query)
 		if param.Query != "" {
-			q = q.Where("title LIKE ?", "%"+param.Query+"%")
+			q = q.Where("LOWER(title) LIKE LOWER(?)", queryLike)
 		}
 
 		rows, err := q.Order(fmt.Sprintf("%s %s", orderBy, sortBy)).Limit(limit).Offset(page).Rows()
@@ -253,6 +256,13 @@ func (r *postgresArticleRepo) GetAll(param model.QueryParamArticle) <-chan Resul
 			}
 
 			articles = append(articles, article)
+		}
+
+		if len(articles) <= 0 {
+			errMsg := fmt.Errorf(shared.ErrorDataNotFound)
+			utils.Log(log.ErrorLevel, errMsg.Error(), ctxRepo, "rows_empty")
+			output <- ResultRepository{Error: errMsg}
+			return
 		}
 
 		output <- ResultRepository{Result: articles}

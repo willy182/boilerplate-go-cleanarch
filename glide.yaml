@@ -19,3 +19,9 @@ import:
 - package: github.com/xeipuuv/gojsonschema
   version: v1.1.0
 - package: github.com/xeipuuv/gojsonreference
+- package: github.com/jarcoal/httpmock
+  version: v1.0.4
+- package: github.com/stretchr/testify
+  version: v1.4.0
+  subpackages:
+  - assert

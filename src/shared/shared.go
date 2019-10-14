@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jarcoal/httpmock"
 )
 
 const (
@@ -287,4 +289,12 @@ func GetHostURL(req *http.Request) string {
 // GetSelfLink function to get self link
 func GetSelfLink(req *http.Request) string {
 	return fmt.Sprintf("%s%s", GetHostURL(req), req.RequestURI)
+}
+
+// MockHTTP for mocking http server
+func MockHTTP(method, url string, statusCode int, responseBodyData interface{}) {
+	httpmock.RegisterResponder(method, url, func(*http.Request) (*http.Response, error) {
+		resp, _ := httpmock.NewJsonResponse(statusCode, responseBodyData)
+		return resp, nil
+	})
 }

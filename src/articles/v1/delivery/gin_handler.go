@@ -51,7 +51,6 @@ func (h *ArticleHandler) Create(c *gin.Context) {
 
 	multiError = shared.Validate("article_create_params", params)
 	if multiError != nil && multiError.HasError() {
-		multiError.Append("validateParams", multiError)
 		utils.Log(log.ErrorLevel, multiError.Error(), ctxHandler, "validate_params")
 		response := shared.NewHTTPResponse(http.StatusBadRequest, "validate params", multiError)
 		response.JSON(c.Writer)
@@ -97,7 +96,12 @@ func (h *ArticleHandler) GetByID(c *gin.Context) {
 
 	id, _ := strconv.Atoi(idParam)
 	res := <-h.ArticleUseCase.GetByID(id)
-	if res.Error != nil {
+	if res.Error != nil && res.Error.Error() == shared.ErrorRecordNotFound {
+		utils.Log(log.ErrorLevel, res.Error.Error(), ctxHandler, "record_not_found")
+		response := shared.NewHTTPResponse(http.StatusOK, res.Error.Error())
+		response.JSON(c.Writer)
+		return
+	} else if res.Error != nil {
 		utils.Log(log.ErrorLevel, res.Error.Error(), ctxHandler, "err_res_get_by_id")
 		response := shared.NewHTTPResponse(http.StatusBadRequest, res.Error.Error(), multiError)
 		response.JSON(c.Writer)
@@ -157,6 +161,14 @@ func (h *ArticleHandler) GetAll(c *gin.Context) {
 	}
 
 	result := res.Result.(usecase.ResponseUseCase)
+
+	if result.Total == 0 {
+		msg := "Search results empty"
+		utils.Log(log.ErrorLevel, msg, ctxHandler, "list_empty")
+		response := shared.NewHTTPResponse(http.StatusOK, msg)
+		response.JSON(c.Writer)
+		return
+	}
 
 	var (
 		page  = 1

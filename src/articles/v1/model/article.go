@@ -15,8 +15,8 @@ type GormArticle struct {
 
 // ArticleInput data of struct
 type ArticleInput struct {
-	Title       string `json:"title"`
-	Summary     string `json:"summary"`
+	Title       string `json:"title,omitempty"`
+	Summary     string `json:"summary,omitempty"`
 	Description string `json:"description,omitempty"`
 	Image       string `json:"image,omitempty"`
 }
