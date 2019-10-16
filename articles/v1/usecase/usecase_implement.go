@@ -96,7 +96,12 @@ func (u *articleUseCase) GetAll(params model.QueryParamArticle) <-chan ResultUse
 
 		var response ResponseUseCase
 
-		res := <-u.articleRepo.GetAll(params)
+		resChan := u.articleRepo.GetAll(params)
+		resTotalChan := u.articleRepo.GetTotal(params)
+
+		res := <-resChan
+		resTotal := <-resTotalChan
+
 		if res.Error != nil {
 			utils.Log(log.ErrorLevel, res.Error.Error(), ctxUsecase, "res_repo_get_all")
 			output <- ResultUseCase{Error: res.Error}
@@ -105,7 +110,6 @@ func (u *articleUseCase) GetAll(params model.QueryParamArticle) <-chan ResultUse
 
 		data := res.Result.([]model.Article)
 
-		resTotal := <-u.articleRepo.GetTotal(params)
 		if resTotal.Error != nil {
 			utils.Log(log.ErrorLevel, resTotal.Error.Error(), ctxUsecase, "res_repo_get_total")
 			output <- ResultUseCase{Error: resTotal.Error}
