@@ -73,7 +73,7 @@ func (h *ArticleHandler) Create(c *gin.Context) {
 		return
 	}
 
-	response := lib.NewHTTPResponse(http.StatusOK, "Data has been save")
+	response := lib.NewHTTPResponse(http.StatusCreated, "Data has been save")
 	response.JSON(c.Writer)
 	return
 }
